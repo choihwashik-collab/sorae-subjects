@@ -3,50 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교사용 수강설계 현황 대시보드</title>
+    <title>소래고 교사용 수강설계 현황 대시보드</title>
     <style>
-        :root { --primary: #0056b3; --accent: #7cb342; --bg: #f4f5f7; }
-        body { font-family: 'Pretendard', sans-serif; margin: 0; padding: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+        :root { --primary: #0056b3; --bg: #f4f5f7; }
+        body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; margin: 0; padding: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
         
-        /* 왼쪽 학생 목록 (사이드바) */
-        .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
-        .sidebar-header { padding: 20px; background: var(--primary); color: white; text-align: center; }
-        .sidebar-header h2 { margin: 0; font-size: 1.3rem; }
+        .sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
+        .sidebar-header { padding: 25px 20px; background: var(--primary); color: white; text-align: center; }
+        .sidebar-header h2 { margin: 0; font-size: 1.4rem; }
+        
+        .refresh-btn { padding: 12px; background: #e6f0fa; color: var(--primary); border: none; border-bottom: 1px solid #ddd; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; }
+        .refresh-btn:hover { background: #d0e4f7; }
+        
         .student-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; }
-        .student-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .student-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; display: flex; align-items: center; }
         .student-item:hover { background: #f0f7ff; }
         .student-item.active { background: #e6f0fa; border-left: 5px solid var(--primary); font-weight: bold; }
-        .stu-id-badge { background: #eee; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; color: #555; }
+        .stu-id-badge { background: #555; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: white; margin-right: 10px; font-weight: bold; }
         
-        /* 오른쪽 메인 상세 화면 */
         .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; border-radius: 12px; padding: 30px; width: 100%; max-width: 800px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: none; }
+        .empty-state { text-align: center; color: #888; margin-top: 150px; font-size: 1.2rem; line-height: 1.6; }
         
-        .empty-state { text-align: center; color: #888; margin-top: 100px; font-size: 1.2rem; }
+        .card { background: white; border-radius: 12px; padding: 40px; width: 100%; max-width: 900px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); display: none; }
+        .card-header { border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .card-header h2 { color: var(--primary); margin: 0; font-size: 1.8rem; }
+        .submit-time { color: #888; font-size: 0.95rem; }
         
-        /* 학생 기본 정보 표 */
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .info-table th, .info-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .info-table th { background: #f8f9fa; width: 20%; color: #333; font-weight: bold; }
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 35px; }
+        .info-table th, .info-table td { border: 1px solid #ddd; padding: 15px; text-align: left; font-size: 1.05rem; }
+        .info-table th { background: #f8f9fa; width: 20%; color: #333; font-weight: bold; text-align: center; }
         
-        /* 선택 과목 표 */
-        .subject-table { width: 100%; border-collapse: collapse; }
-        .subject-table th, .subject-table td { border: 1px solid #333; padding: 12px; text-align: center; }
-        .subject-table th { background: var(--table-header, #e6f0fa); font-weight: bold; font-size: 1.1rem; }
-        .subj-tag { display: inline-block; background: #eef2f5; border: 1px solid #ccc; padding: 8px 15px; border-radius: 8px; margin: 5px; font-weight: bold; color: var(--primary); }
-
-        .refresh-btn { padding: 10px; background: var(--accent); color: white; border: none; width: 100%; cursor: pointer; font-size: 1rem; font-weight: bold; }
-        .refresh-btn:hover { background: #689f38; }
+        /* ★ 학생 선택 과목을 보여주는 바둑판 표 디자인 ★ */
+        .dashboard-table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .dashboard-table th, .dashboard-table td { border: 1px solid #ccc; padding: 18px; vertical-align: top; }
+        .dashboard-table th { background: #e6f0fa; color: #0056b3; font-weight: bold; text-align: center; width: 50%; font-size: 1.1rem; }
+        .dashboard-table td { background: #fff; line-height: 1.8; text-align: center; }
+        
+        .subj-tag { display: inline-block; background: #fff; border: 1px solid #0056b3; color: #0056b3; padding: 6px 14px; border-radius: 20px; margin: 4px; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .subj-none { color: #aaa; font-style: italic; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>교사용 대시보드</h2>
-            <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #cce5ff;">제출 현황</p>
+            <h2>선택과목 제출 현황</h2>
         </div>
-        <button class="refresh-btn" onclick="fetchData()">🔄 데이터 새로고침</button>
+        <button class="refresh-btn" onclick="fetchData()">🔄 데이터 새로고침 (클릭)</button>
         <ul class="student-list" id="list-container">
             <li style="padding: 20px; text-align: center; color: #888;">데이터를 불러오는 중...</li>
         </ul>
@@ -54,42 +57,47 @@
 
     <div class="main-content">
         <div class="empty-state" id="empty-state">
-            👈 왼쪽 목록에서 학생의 학번을 클릭하시면<br>선택과목 상세 현황이 표 형태로 나타납니다.
+            👈 왼쪽 목록에서 <strong>학생의 학번과 이름</strong>을 클릭하시면<br>해당 학생이 제출한 선택과목 현황이 깔끔한 표 형태로 나타납니다.
         </div>
 
         <div class="card" id="detail-card">
-            <h2 style="color: var(--primary); margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 10px;" id="d-title">학생 정보</h2>
+            <div class="card-header">
+                <h2 id="d-title">학생 정보</h2>
+                <span class="submit-time" id="d-time"></span>
+            </div>
             
             <table class="info-table">
-                <tr><th>학번</th><td id="d-id"></td><th>이름</th><td id="d-name"></td></tr>
-                <tr><th>희망 직업</th><td id="d-job"></td><th>희망 학과</th><td id="d-dept"></td></tr>
-                <tr><th>제출 일시</th><td colspan="3" id="d-time" style="color: #666; font-size: 0.9rem;"></td></tr>
+                <tr>
+                    <th>학번</th><td id="d-id" style="font-weight: bold;"></td>
+                    <th>이름</th><td id="d-name" style="font-weight: bold;"></td>
+                </tr>
+                <tr>
+                    <th>희망 직업</th><td id="d-job"></td>
+                    <th>희망 학과</th><td id="d-dept"></td>
+                </tr>
             </table>
 
-            <h3 style="margin-bottom: 10px; color: #333;">📚 최종 선택 과목 목록</h3>
-            <table class="subject-table">
+            <h3 style="margin-bottom: 15px; color: #333; font-size: 1.3rem;">📚 학기별 선택 과목 현황</h3>
+            
+            <table class="dashboard-table">
                 <thead>
                     <tr>
-                        <th>학생이 선택한 2~3학년 과목 현황</th>
+                        <th>1학기</th>
+                        <th>2학기</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td id="d-subjects" style="padding: 20px; text-align: left; line-height: 2;">
-                            </td>
-                    </tr>
-                </tbody>
+                <tbody id="d-subjects-table">
+                    </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // ★ 여기에 1단계에서 얻은 구글 Apps Script 주소를 넣으세요 ★
-        const scriptUrl = "https://script.google.com/macros/s/AKfycbyd4Sxs_txe5sCBSShuDJJcRDGJh1bcu4p2vRuxsiM5PB6B0E1rcxksc95DFocESSbvOw/exec";
+        // ★ 1단계에서 얻은 구글 Apps Script 배포 주소를 여기에 똑같이 넣으세요 ★
+        const scriptUrl = "여기에_구글앱스크립트_URL_입력";
         
         let allData = [];
 
-        // 시작할 때 데이터 불러오기
         window.onload = fetchData;
 
         async function fetchData() {
@@ -100,63 +108,80 @@
                 const response = await fetch(scriptUrl);
                 const data = await response.json();
                 
-                // 동일 학번이 여러 번 제출한 경우, 가장 마지막(최신) 데이터만 남기기
                 const latestDataMap = {};
-                data.forEach(item => {
-                    latestDataMap[item.id] = item; // 학번을 키로 덮어쓰기
-                });
-                
-                // 학번 순으로 정렬
+                data.forEach(item => { latestDataMap[item.id] = item; });
                 allData = Object.values(latestDataMap).sort((a, b) => a.id.localeCompare(b.id));
                 renderList();
-                
             } catch (error) {
-                listContainer.innerHTML = '<li style="padding: 20px; text-align: center; color: red;">데이터를 불러오지 못했습니다. URL을 확인해주세요.</li>';
-                console.error(error);
+                listContainer.innerHTML = '<li style="padding: 20px; text-align: center; color: red;">데이터를 불러오지 못했습니다.<br>구글 앱 스크립트 URL을 확인해주세요.</li>';
             }
         }
 
         function renderList() {
             const listContainer = document.getElementById('list-container');
             listContainer.innerHTML = '';
-
             if(allData.length === 0) {
-                listContainer.innerHTML = '<li style="padding: 20px; text-align: center; color: #888;">제출된 데이터가 없습니다.</li>';
+                listContainer.innerHTML = '<li style="padding: 20px; text-align: center; color: #888;">아직 제출한 학생이 없습니다.</li>';
                 return;
             }
-
             allData.forEach((student, index) => {
                 const li = document.createElement('li');
                 li.className = 'student-item';
-                li.innerHTML = `<span class="stu-id-badge">${student.id}</span> <strong>${student.name}</strong>`;
+                li.innerHTML = `<span class="stu-id-badge">${student.id}</span> <span style="font-size:1.1rem;">${student.name}</span>`;
                 li.onclick = () => showDetail(index, li);
                 listContainer.appendChild(li);
             });
         }
 
         function showDetail(index, listItem) {
-            // 사이드바 활성화 디자인
             document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
             listItem.classList.add('active');
 
             const student = allData[index];
 
-            // 정보 채우기
-            document.getElementById('d-title').innerText = `${student.name} 학생의 설계 현황`;
+            document.getElementById('d-title').innerText = `${student.name} 학생의 수강설계 현황`;
+            document.getElementById('d-time').innerText = `최종 제출일시 : ${student.timestamp}`;
             document.getElementById('d-id').innerText = student.id;
             document.getElementById('d-name').innerText = student.name;
             document.getElementById('d-job').innerText = student.job;
             document.getElementById('d-dept').innerText = student.dept;
-            document.getElementById('d-time').innerText = student.timestamp;
 
-            // 과목들을 콤마(,)로 분리해서 예쁜 둥근 태그 모양으로 만들기
-            const subjectsArray = student.subjects.split(',').map(s => s.trim());
-            const subjectHtml = subjectsArray.map(subj => `<span class="subj-tag">${subj}</span>`).join('');
-            document.getElementById('d-subjects').innerHTML = subjectHtml;
+            // 학생용 코드에서 보낸 "2학년 1학기: A,B | 2학년 2학기: C,D ..." 데이터를 분해
+            const parts = student.subjects.split('|').map(p => p.trim());
+            
+            const s2_1 = createTags(parts[0].replace('2학년 1학기:', ''));
+            const s2_2 = createTags(parts[1].replace('2학년 2학기:', ''));
+            const s3_1 = createTags(parts[2].replace('3학년 1학기:', ''));
+            const s3_2 = createTags(parts[3].replace('3학년 2학기:', ''));
 
-            // 화면 전환
+            // 2학년 줄과 3학년 줄을 표(Table)로 만들기
+            const tableHtml = `
+                <tr>
+                    <td colspan="2" style="background:#f0f0f0; color:#333; font-weight:bold; font-size:1.1rem;">[ 2학년 선택과목 ]</td>
+                </tr>
+                <tr>
+                    <td>${s2_1}</td>
+                    <td>${s2_2}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="background:#f0f0f0; color:#333; font-weight:bold; font-size:1.1rem;">[ 3학년 선택과목 ]</td>
+                </tr>
+                <tr>
+                    <td>${s3_1}</td>
+                    <td>${s3_2}</td>
+                </tr>
+            `;
+            
+            document.getElementById('d-subjects-table').innerHTML = tableHtml;
+
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('detail-card').style.display = 'block';
+        }
+        
+        function createTags(subjectString) {
+            const str = subjectString.trim();
+            if(!str || str === '-') return '<span class="subj-none">선택 과목 없음</span>';
+            return str.split(',').map(s => `<span class="subj-tag">${s.trim()}</span>`).join('');
         }
     </script>
 </body>
