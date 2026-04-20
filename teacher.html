@@ -8,10 +8,14 @@
         :root { --primary: #0056b3; --bg: #f4f5f7; }
         body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; margin: 0; padding: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
         
-        .sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
+        /* 사이드바 및 필터 영역 */
+        .sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
         .sidebar-header { padding: 25px 20px; background: var(--primary); color: white; text-align: center; }
         .sidebar-header h2 { margin: 0; font-size: 1.4rem; }
         
+        .filter-container { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px; }
+        .filter-select { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; }
+
         .refresh-btn { padding: 12px; background: #e6f0fa; color: var(--primary); border: none; border-bottom: 1px solid #ddd; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; }
         .refresh-btn:hover { background: #d0e4f7; }
         
@@ -21,6 +25,7 @@
         .student-item.active { background: #e6f0fa; border-left: 5px solid var(--primary); font-weight: bold; }
         .stu-id-badge { background: #555; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: white; margin-right: 10px; font-weight: bold; }
         
+        /* 오른쪽 메인 콘텐츠 */
         .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
         .empty-state { text-align: center; color: #888; margin-top: 150px; font-size: 1.2rem; line-height: 1.6; }
         
@@ -33,11 +38,14 @@
         .info-table th, .info-table td { border: 1px solid #ddd; padding: 15px; text-align: left; font-size: 1.05rem; }
         .info-table th { background: #f8f9fa; width: 20%; color: #333; font-weight: bold; text-align: center; }
         
-        /* ★ 학생 선택 과목을 보여주는 바둑판 표 디자인 ★ */
-        .dashboard-table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .dashboard-table th, .dashboard-table td { border: 1px solid #ccc; padding: 18px; vertical-align: top; }
-        .dashboard-table th { background: #e6f0fa; color: #0056b3; font-weight: bold; text-align: center; width: 50%; font-size: 1.1rem; }
-        .dashboard-table td { background: #fff; line-height: 1.8; text-align: center; }
+        /* ★ 학기별, 과목군별 표 디자인 ★ */
+        .dashboard-table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 20px; }
+        .dashboard-table th, .dashboard-table td { border: 1px solid #ccc; padding: 15px; vertical-align: middle; }
+        .dashboard-table thead th { background: #e6f0fa; color: #0056b3; font-weight: bold; text-align: center; font-size: 1.1rem; }
+        .dashboard-table tbody th { background: #f8f9fa; color: #333; font-weight: bold; text-align: center; width: 20%; }
+        .dashboard-table td { background: #fff; line-height: 1.8; text-align: center; width: 40%; }
+        
+        .table-title { font-size: 1.2rem; font-weight: bold; color: #333; margin: 20px 0 10px 0; background: #eee; padding: 10px; border-radius: 6px; }
         
         .subj-tag { display: inline-block; background: #fff; border: 1px solid #0056b3; color: #0056b3; padding: 6px 14px; border-radius: 20px; margin: 4px; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .subj-none { color: #aaa; font-style: italic; }
@@ -49,7 +57,19 @@
         <div class="sidebar-header">
             <h2>선택과목 제출 현황</h2>
         </div>
-        <button class="refresh-btn" onclick="fetchData()">🔄 데이터 새로고침 (클릭)</button>
+        
+        <div class="filter-container">
+            <select id="filter-grade" class="filter-select" onchange="applyFilter()">
+                <option value="">전체 학년</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+            </select>
+            <select id="filter-class" class="filter-select" onchange="applyFilter()">
+                <option value="">전체 반</option>
+                </select>
+        </div>
+
+        <button class="refresh-btn" onclick="fetchData()">🔄 데이터 다시 불러오기</button>
         <ul class="student-list" id="list-container">
             <li style="padding: 20px; text-align: center; color: #888;">데이터를 불러오는 중...</li>
         </ul>
@@ -68,7 +88,7 @@
             
             <table class="info-table">
                 <tr>
-                    <th>학번</th><td id="d-id" style="font-weight: bold;"></td>
+                    <th>학번</th><td id="d-id" style="font-weight: bold; color:var(--primary);"></td>
                     <th>이름</th><td id="d-name" style="font-weight: bold;"></td>
                 </tr>
                 <tr>
@@ -77,28 +97,35 @@
                 </tr>
             </table>
 
-            <h3 style="margin-bottom: 15px; color: #333; font-size: 1.3rem;">📚 학기별 선택 과목 현황</h3>
+            <h3 style="margin-bottom: 15px; color: #333; font-size: 1.3rem; border-left: 5px solid var(--accent); padding-left: 10px;">📚 최종 선택 과목 현황</h3>
             
-            <table class="dashboard-table">
-                <thead>
-                    <tr>
-                        <th>1학기</th>
-                        <th>2학기</th>
-                    </tr>
-                </thead>
-                <tbody id="d-subjects-table">
-                    </tbody>
-            </table>
+            <div id="d-subjects-container">
+                </div>
         </div>
     </div>
 
     <script>
         // ★ 1단계에서 얻은 구글 Apps Script 배포 주소를 여기에 똑같이 넣으세요 ★
-        const scriptUrl = "https://script.google.com/macros/s/AKfycbyd4Sxs_txe5sCBSShuDJJcRDGJh1bcu4p2vRuxsiM5PB6B0E1rcxksc95DFocESSbvOw/exec";
+        const scriptUrl = "여기에_구글앱스크립트_URL_입력";
         
         let allData = [];
+        let filteredData = [];
 
-        window.onload = fetchData;
+        window.onload = () => {
+            initClassSelect();
+            fetchData();
+        };
+
+        // 반 선택 드롭다운 1~12반 생성
+        function initClassSelect() {
+            const classSelect = document.getElementById('filter-class');
+            for(let i=1; i<=12; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = i + "반";
+                classSelect.appendChild(opt);
+            }
+        }
 
         async function fetchData() {
             const listContainer = document.getElementById('list-container');
@@ -108,23 +135,49 @@
                 const response = await fetch(scriptUrl);
                 const data = await response.json();
                 
+                // 동일 학번 덮어쓰기 (가장 최신 데이터 유지)
                 const latestDataMap = {};
                 data.forEach(item => { latestDataMap[item.id] = item; });
+                
                 allData = Object.values(latestDataMap).sort((a, b) => a.id.localeCompare(b.id));
-                renderList();
+                applyFilter(); // 데이터 불러온 후 필터 적용
+                
             } catch (error) {
                 listContainer.innerHTML = '<li style="padding: 20px; text-align: center; color: red;">데이터를 불러오지 못했습니다.<br>구글 앱 스크립트 URL을 확인해주세요.</li>';
+                console.error(error);
             }
+        }
+
+        // ★ 필터 적용 함수 (학번 앞자리로 학년, 2~3번째 자리로 반 인식) ★
+        function applyFilter() {
+            const gradeFilter = document.getElementById('filter-grade').value;
+            const classFilter = document.getElementById('filter-class').value;
+
+            filteredData = allData.filter(student => {
+                const stuId = String(student.id);
+                if(stuId.length !== 5) return true; // 5자리가 아닌 경우 무조건 표시 (오류 방지)
+                
+                const g = stuId.charAt(0);
+                const c = parseInt(stuId.substring(1, 3), 10).toString(); // 예: '01' -> '1'
+
+                if(gradeFilter && g !== gradeFilter) return false;
+                if(classFilter && c !== classFilter) return false;
+                return true;
+            });
+
+            renderList();
         }
 
         function renderList() {
             const listContainer = document.getElementById('list-container');
             listContainer.innerHTML = '';
-            if(allData.length === 0) {
-                listContainer.innerHTML = '<li style="padding: 20px; text-align: center; color: #888;">아직 제출한 학생이 없습니다.</li>';
+            
+            if(filteredData.length === 0) {
+                listContainer.innerHTML = '<li style="padding: 20px; text-align: center; color: #888;">해당 조건의 학생이 없습니다.</li>';
                 return;
             }
-            allData.forEach((student, index) => {
+
+            filteredData.forEach((student, index) => {
                 const li = document.createElement('li');
                 li.className = 'student-item';
                 li.innerHTML = `<span class="stu-id-badge">${student.id}</span> <span style="font-size:1.1rem;">${student.name}</span>`;
@@ -137,51 +190,87 @@
             document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
             listItem.classList.add('active');
 
-            const student = allData[index];
+            const student = filteredData[index];
+            const stuId = String(student.id);
+            const isSecondGrade = stuId.startsWith('2'); // 학번이 2로 시작하는지 체크
 
             document.getElementById('d-title').innerText = `${student.name} 학생의 수강설계 현황`;
             document.getElementById('d-time').innerText = `최종 제출일시 : ${student.timestamp}`;
             document.getElementById('d-id').innerText = student.id;
             document.getElementById('d-name').innerText = student.name;
-            document.getElementById('d-job').innerText = student.job;
-            document.getElementById('d-dept').innerText = student.dept;
+            document.getElementById('d-job').innerText = student.job || '-';
+            document.getElementById('d-dept').innerText = student.dept || '-';
 
-            // 학생용 코드에서 보낸 "2학년 1학기: A,B | 2학년 2학기: C,D ..." 데이터를 분해
-            const parts = student.subjects.split('|').map(p => p.trim());
-            
-            const s2_1 = createTags(parts[0].replace('2학년 1학기:', ''));
-            const s2_2 = createTags(parts[1].replace('2학년 2학기:', ''));
-            const s3_1 = createTags(parts[2].replace('3학년 1학기:', ''));
-            const s3_2 = createTags(parts[3].replace('3학년 2학기:', ''));
+            // JSON 데이터 파싱
+            let subjData = null;
+            try { subjData = JSON.parse(student.subjects); } 
+            catch(e) { console.log("이전 텍스트 버전 데이터입니다."); }
 
-            // 2학년 줄과 3학년 줄을 표(Table)로 만들기
-            const tableHtml = `
-                <tr>
-                    <td colspan="2" style="background:#f0f0f0; color:#333; font-weight:bold; font-size:1.1rem;">[ 2학년 선택과목 ]</td>
-                </tr>
-                <tr>
-                    <td>${s2_1}</td>
-                    <td>${s2_2}</td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="background:#f0f0f0; color:#333; font-weight:bold; font-size:1.1rem;">[ 3학년 선택과목 ]</td>
-                </tr>
-                <tr>
-                    <td>${s3_1}</td>
-                    <td>${s3_2}</td>
-                </tr>
-            `;
-            
-            document.getElementById('d-subjects-table').innerHTML = tableHtml;
+            let html = '';
 
+            const createTags = (arr) => {
+                if(!arr || arr.length === 0 || arr[0] === "") return '<span class="subj-none">선택 안 함</span>';
+                return arr[0].split(',').map(s => `<span class="subj-tag">${s.trim()}</span>`).join('');
+            };
+
+            if(subjData) {
+                // ★ 1학년 학생(학번 1로 시작)일 경우에만 2학년 표를 보여줍니다 ★
+                if(!isSecondGrade) {
+                    html += `
+                        <div class="table-title">[ 2학년 선택과목 ]</div>
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr><th>과목군</th><th>1학기</th><th>2학기</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>기/제/한/교</th>
+                                    <td>${createTags([subjData.y2_tech[0]])}</td>
+                                    <td>${createTags([subjData.y2_tech[1]])}</td>
+                                </tr>
+                                <tr>
+                                    <th>교과간 선택</th>
+                                    <td>${createTags([subjData.y2_elec[0]])}</td>
+                                    <td>${createTags([subjData.y2_elec[1]])}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                }
+
+                // 3학년 표 (2학년, 1학년 모두에게 보임)
+                html += `
+                    <div class="table-title">[ 3학년 선택과목 ]</div>
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr><th>과목군</th><th>1학기</th><th>2학기</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>예술</th>
+                                <td>${createTags([subjData.y3_art[0]])}</td>
+                                <td>${createTags([subjData.y3_art[1]])}</td>
+                            </tr>
+                            <tr>
+                                <th>기/제/한/교</th>
+                                <td>${createTags([subjData.y3_tech[0]])}</td>
+                                <td>${createTags([subjData.y3_tech[1]])}</td>
+                            </tr>
+                            <tr>
+                                <th>교과간 선택</th>
+                                <td>${createTags([subjData.y3_elec[0]])}</td>
+                                <td>${createTags([subjData.y3_elec[1]])}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html = `<div style="padding:20px; color:#d32f2f;">오류: 새로운 양식으로 제출되지 않은 구버전 데이터입니다.</div>`;
+            }
+
+            document.getElementById('d-subjects-container').innerHTML = html;
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('detail-card').style.display = 'block';
-        }
-        
-        function createTags(subjectString) {
-            const str = subjectString.trim();
-            if(!str || str === '-') return '<span class="subj-none">선택 과목 없음</span>';
-            return str.split(',').map(s => `<span class="subj-tag">${s.trim()}</span>`).join('');
         }
     </script>
 </body>
