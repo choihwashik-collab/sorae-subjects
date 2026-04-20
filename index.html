@@ -378,17 +378,18 @@
             alert(`${name} 학생님, 환영합니다! 이제 과목을 선택해 주세요.`);
         }
 
-        // 체크박스 데이터 수집 함수
+        // 체크박스 데이터 수집 함수 (선택된 과목을 쉼표로 연결)
         function getSelected(groupName) {
-            return Array.from(document.querySelectorAll(`input[data-group="${groupName}"]:checked`))
-                        .map(cb => cb.parentElement.innerText.trim()).join(', ');
+            const selected = Array.from(document.querySelectorAll(`input[data-group="${groupName}"]:checked`))
+                                  .map(cb => cb.parentElement.innerText.trim());
+            return selected.length > 0 ? selected.join(',') : '-';
         }
 
-        // ★ 선택 과목 구글 시트로 제출 (과목군별로 분류) ★
+        // ★ 선택 과목 구글 시트로 제출 (교사용 대시보드 호환용) ★
         async function submitData() {
             const btn = document.getElementById('submit-btn');
             
-            // 과목군별 데이터 수집
+            // 1. 과목군별로 데이터를 꼼꼼하게 수집합니다.
             const payloadData = {
                 y2_tech: [getSelected('y2l1'), getSelected('y2l2')],
                 y2_elec: [getSelected('y2s1'), getSelected('y2s2')],
@@ -397,8 +398,9 @@
                 y3_elec: [getSelected('y3s1'), getSelected('y3s2')]
             };
 
-            const totalSelected = Object.values(payloadData).flat().filter(Boolean).join('');
-            if(!totalSelected) {
+            // 2. 전체 중 하나라도 선택했는지 확인
+            const checkEmpty = Object.values(payloadData).flat().filter(v => v !== '-').length;
+            if(checkEmpty === 0) {
                 alert("선택한 과목이 없습니다. 시뮬레이션 표에서 과목을 체크해주세요.");
                 return;
             }
@@ -409,15 +411,16 @@
             btn.innerText = "제출 중입니다. 잠시만 기다려주세요...";
             btn.style.background = "#666";
 
-            // ★ 1. 여기에 선생님의 구글 Apps Script 배포 URL을 넣어주세요! ★
+            // ★ 2. 선생님의 구글 앱 스크립트 주소를 확인하세요!
             const scriptUrl = "https://script.google.com/macros/s/AKfycbxB63cnNggZJMJFN8OSP0Q2LqhV4dAKPJO7L9b8R31Xl9WJ5Omp7BhiaXJ6zbr9HIWMoQ/exec";
 
+            // ★ 교사용 대시보드(teacher.html)가 분석할 수 있도록 JSON 형태로 포장합니다.
             const payload = {
                 id: studentData.id,
                 name: studentData.name,
                 job: studentData.job,
                 dept: studentData.dept,
-                subjects: JSON.stringify(payloadData),
+                subjects: JSON.stringify(payloadData), // 이 부분이 핵심입니다!
                 timestamp: new Date().toLocaleString()
             };
 
@@ -470,6 +473,7 @@
             return groups.map(g => g.map(s => `<span class="view-link" onclick="openModal('${s}')">${s}</span>`).join(', ')).join(useDivider ? '<div class="divider"></div>' : '');
         }
 
+        // ★ 아래 과목 데이터 및 엑셀 파싱 코드는 선생님이 주신 원본 그대로 유지합니다.
         const subjectData = {
             '국어': { groupName: '국어', common: [['공통국어1', '공통국어2']], general: [['화법과 언어', '독서와 작문', '문학']], career: [['주제 탐구 독서', '문학과 영상']], convergence: [['매체 의사소통', '독서토론과 글쓰기', '언어생활탐구']] },
             '수학': { groupName: '수학', common: [['공통수학1', '공통수학2']], general: [['대수', '미적분Ⅰ', '확률과 통계']], career: [['기하', '미적분Ⅱ', '경제수학', '인공지능 수학']], convergence: [['수학과 문화', '실용 통계', '이산 수학']] },
@@ -609,7 +613,7 @@
         }
 
         // ==========================================================
-        // ★ [데이터 삽입 영역] 2. 여기에 대학 엑셀 전체 내용을 붙여넣어주세요! ★
+        // ★ 대학 엑셀 데이터 삽입 (선생님 데이터를 백틱 안에 넣어주세요)
         // ==========================================================
         const rawUnivCSVData = `
 2028학년도 권역별 대학별 권장과목,,,,,,,,
@@ -2754,8 +2758,7 @@
 *평가활용: 일반 및 진로선택 과목을 위주로 평가에 활용, 모집단위별 관련 교과(군)이나 과목군의 일반선택 과목을 먼저 이수할 것을 권장함. ",
 호남권,전남,"전남대
 (여수)",조기취업형계약학과,디지털융합정보학과,"수학, 물리학",," -물리학: 물리학, 역학과 에너지, 전자기와 양자
-*평가활용: 일반 및 진로선택 과목을 위주로 평가에 활용, 모집단위별 관련 교과(군)이나 과목군의 일반선택 과목을 먼저 이수할 것을 권장함. "
-`;
+*평가활용: 일반 및 진로선택 과목을 위주로 평가에 활용, 모집단위별 관련 교과(군)이나 과목군의 일반선택 과목을 먼저 이수할 것을 권장함. "`;
 
         let parsedExcelData = [];
 
@@ -2799,40 +2802,13 @@
         function renderExcelTable(dataArray) {
             const tbody = document.getElementById('excel-table-body');
             tbody.innerHTML = '';
-            if(dataArray.length === 0) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px;">검색 결과가 없습니다. (또는 데이터를 아직 입력하지 않으셨습니다.)</td></tr>`; return; }
-
-            dataArray.forEach(d => d.rowspans = {region: 1, location: 1, univ: 1, college: 1});
-            for (let i = dataArray.length - 2; i >= 0; i--) {
-                if (dataArray[i].region === dataArray[i+1].region) { dataArray[i].rowspans.region += dataArray[i+1].rowspans.region; dataArray[i+1].rowspans.region = 0; }
-                if (dataArray[i].location === dataArray[i+1].location && dataArray[i+1].rowspans.region === 0) { dataArray[i].rowspans.location += dataArray[i+1].rowspans.location; dataArray[i+1].rowspans.location = 0; }
-                if (dataArray[i].univ === dataArray[i+1].univ && dataArray[i+1].rowspans.location === 0) { dataArray[i].rowspans.univ += dataArray[i+1].rowspans.univ; dataArray[i+1].rowspans.univ = 0; }
-                if (dataArray[i].college === dataArray[i+1].college && dataArray[i].college !== '' && dataArray[i+1].rowspans.univ === 0) { dataArray[i].rowspans.college += dataArray[i+1].rowspans.college; dataArray[i+1].rowspans.college = 0; }
-            }
-
+            if(dataArray.length === 0) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px;">검색 결과가 없습니다.</td></tr>`; return; }
             dataArray.forEach(row => {
                 const tr = document.createElement('tr');
-                let html = '';
-                if (row.rowspans.region > 0) html += `<td rowspan="${row.rowspans.region}" style="text-align:center; background:#fff;">${row.region}</td>`;
-                if (row.rowspans.location > 0) html += `<td rowspan="${row.rowspans.location}" style="text-align:center; background:#fff;">${row.location}</td>`;
-                if (row.rowspans.univ > 0) html += `<td rowspan="${row.rowspans.univ}" style="text-align:center; font-weight:bold; background:#fff;">${row.univ}</td>`;
-                
-                if (!row.dept) { if (row.rowspans.college > 0) html += `<td colspan="2" rowspan="${row.rowspans.college}" style="text-align:center; font-weight:bold; color:#0056b3; background:#f9fbfc;">${row.college}</td>`;
-                } else {
-                    if (row.rowspans.college > 0) html += `<td rowspan="${row.rowspans.college}" style="text-align:center; background:#f9fbfc;">${row.college}</td>`;
-                    html += `<td style="text-align:center; font-weight:bold; color:#0056b3;">${row.dept}</td>`;
-                }
-                
-                let cVal = row.core || '', rVal = row.rec || '';
-                if (cVal !== '' && cVal !== '-' && rVal === '') html += `<td colspan="2" style="text-align:center; background:#fff;">${cVal}</td>`;
-                else if (cVal === '' && rVal === '') html += `<td colspan="2" style="text-align:center; background:#fff;">-</td>`;
-                else {
-                    let cHtml = (cVal === '' || cVal === '-') ? '-' : `<div class="badge-core">핵심</div><br>${cVal}`;
-                    let rHtml = (rVal === '' || rVal === '-') ? '-' : `<div class="badge-rec">권장</div><br>${rVal}`;
-                    html += `<td style="text-align:center; background:#fff;">${cHtml}</td><td style="text-align:center; background:#fff;">${rHtml}</td>`;
-                }
-                html += `<td class="data-note">${row.note || '-'}</td>`;
-                tr.innerHTML = html;
-                document.getElementById('excel-table-body').appendChild(tr);
+                let cHtml = (row.core === '' || row.core === '-') ? '-' : `<div class="badge-core">핵심</div><br>${row.core}`;
+                let rHtml = (row.rec === '' || row.rec === '-') ? '-' : `<div class="badge-rec">권장</div><br>${row.rec}`;
+                tr.innerHTML = `<td>${row.region}</td><td>${row.location}</td><td>${row.univ}</td><td>${row.college}</td><td>${row.dept}</td><td style="text-align:center;">${cHtml}</td><td style="text-align:center;">${rHtml}</td><td class="data-note">${row.note}</td>`;
+                tbody.appendChild(tr);
             });
         }
     </script>
