@@ -353,7 +353,7 @@
             if(Object.values(payloadData).flat().filter(v => v !== '-').length === 0) { alert("선택한 과목이 없습니다."); return; }
             if(!confirm("제출하시겠습니까?\n신중하게 확인 후 제출해 주세요.")) return;
             btn.disabled = true; btn.innerText = "제출 중...";
-            const scriptUrl = "https://script.google.com/macros/s/AKfycbxB63cnNggZJMJFN8OSP0Q2LqhV4dAKPJO7L9b8R31Xl9WJ5Omp7BhiaXJ6zbr9HIWMoQ/exec";
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbxGeoTY6MxVoCAeyCo-0BZ_-a5piwh7-QsGVpd200_197mcAe1L23DSxibs98BC3KMcpg/exec";
             const payload = { id: studentData.id, name: studentData.name, job: studentData.job, dept: studentData.dept, subjects: JSON.stringify(payloadData), timestamp: new Date().toLocaleString() };
             try {
                 await fetch(scriptUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
