@@ -61,6 +61,7 @@
         .video-item { margin-bottom: 8px; font-size: 0.9rem; background: #fff; border: 1px solid #eee; border-radius: 4px; transition: 0.2s; }
         .video-item:hover { border-color: #d32f2f; transform: translateY(-2px); }
         .video-item a { color: #333; text-decoration: none; display: block; padding: 6px 8px; }
+        .video-item a:hover { color: #d32f2f; font-weight: bold; }
         .video-item a::before { content: '▶'; margin-right: 6px; font-size: 0.75rem; color: #d32f2f; }
         .excel-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; padding: 15px; background: #eef2f5; border-radius: 8px; border: 1px solid #dcdcdc; }
         .excel-filters select, .excel-filters input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95rem; flex: 1; min-width: 150px; }
@@ -76,6 +77,8 @@
         #student-info-modal { z-index: 3000; }
         .input-field { padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; width: 100%; box-sizing: border-box; }
         .divider { height: 1px; background: #ddd; margin: 5px 0; width: 100%; }
+        .badge-core { background: #ffebeb; color: #d32f2f; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; border: 1px solid #ffcdcd; margin-bottom:4px; display:inline-block; }
+        .badge-rec { background: #e8f4fd; color: var(--primary); padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 0.8rem; border: 1px solid #cce5ff; margin-bottom:4px; display:inline-block; }
     </style>
 </head>
 <body>
@@ -254,7 +257,6 @@
     <div id="kme-warning">⚠️ 교과간 선택에서 '국어, 수학, 영어' 과목은 2~3학년 합쳐서 최대 6개까지만 선택 가능합니다!</div>
     <div class="box-container" style="text-align: center; background-color: #eef2f5; border: 2px dashed var(--primary); margin-top: 20px;">
         <h3 style="color: var(--primary); margin-top: 0;">✅ 내 선택과목 제출하기</h3>
-        <p style="color: #555; margin-bottom: 20px;">위의 시뮬레이션 표에서 과목 선택을 모두 마쳤다면 아래 버튼을 눌러 제출해주세요.</p>
         <button id="submit-btn" onclick="submitData()" style="padding: 15px 40px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 1.15rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;">담임 선생님께 최종 제출하기</button>
     </div>
 
@@ -273,7 +275,7 @@
     </div>
 
     <div class="box-container">
-        <h3>📺 과목 안내 영상 (과목명을 클릭하면 유튜브 영상으로 연결됩니다)</h3>
+        <h3>📺 과목 안내 영상</h3>
         <div class="youtube-grid" id="youtube-section">
             <div class="youtube-card" id="yt-2-req"><h4>2학년 필수과목</h4><ul class="video-list"></ul></div>
             <div class="youtube-card" id="yt-2-elec"><h4>2학년 선택과목</h4><ul class="video-list"></ul></div>
@@ -306,7 +308,11 @@
     </div>
 
     <script>
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbxGeoTY6MxVoCAeyCo-0BZ_-a5piwh7-QsGVpd200_197mcAe1L23DSxibs98BC3KMcpg/exec";
         let studentData = { id: "", name: "", job: "", dept: "" };
+
+        window.onload = () => { changeTab('국어'); parseAndRenderYoutube(); initCheckboxLimits(); initExcelData(); document.getElementById('student-info-modal').style.display = 'flex'; };
+
         function saveStudentInfo() {
             const id = document.getElementById('stu-id').value.trim();
             const name = document.getElementById('stu-name').value.trim();
@@ -316,7 +322,6 @@
             if(id.length !== 5 || isNaN(id)) { alert("학번은 5자리 숫자로 입력해주세요."); return; }
             studentData = { id, name, job, dept };
             document.getElementById('student-info-modal').style.display = 'none';
-            alert(`${name} 학생님, 환영합니다! 이제 과목을 선택해 주세요.`);
         }
 
         function openModal(sName) {
@@ -327,9 +332,9 @@
             const viewerUrl = `https://docs.google.com/viewer?url=${pdfUrl}&embedded=true`;
             document.getElementById('modal-body').innerHTML = `<iframe src="${viewerUrl}" width="100%" height="100%" style="border:none;min-height:75vh;"></iframe>`;
             document.getElementById('document-modal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
         }
-        function closeModal() { document.getElementById('document-modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
+
+        function closeModal() { document.getElementById('document-modal').style.display = 'none'; }
 
         function renderGroup(groups, useDivider = false) {
             if (!groups || groups.length === 0) return '-';
@@ -350,22 +355,32 @@
                 y3_tech: [getSelected('y3t1'), getSelected('y3t2')],
                 y3_elec: [getSelected('y3s1'), getSelected('y3s2')]
             };
-            if(Object.values(payloadData).flat().filter(v => v !== '-').length === 0) { alert("선택한 과목이 없습니다."); return; }
-            if(!confirm("제출하시겠습니까?\n신중하게 확인 후 제출해 주세요.")) return;
+            if(!confirm("제출하시겠습니까?")) return;
             btn.disabled = true; btn.innerText = "제출 중...";
-            const scriptUrl = "https://script.google.com/macros/s/AKfycbxGeoTY6MxVoCAeyCo-0BZ_-a5piwh7-QsGVpd200_197mcAe1L23DSxibs98BC3KMcpg/exec";
             const payload = { id: studentData.id, name: studentData.name, job: studentData.job, dept: studentData.dept, subjects: JSON.stringify(payloadData), timestamp: new Date().toLocaleString() };
             try {
                 await fetch(scriptUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                 alert("성공적으로 제출되었습니다!"); btn.innerText = "다시 제출하기"; btn.disabled = false;
-            } catch (error) { alert("오류 발생. 다시 시도해주세요."); btn.disabled = false; }
+            } catch (error) { alert("오류 발생"); btn.disabled = false; }
+        }
+
+        function changeTab(key) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + key).classList.add('active');
+            const data = subjectData[key];
+            document.getElementById('current-subject-title').innerText = data.groupName;
+            document.getElementById('col-group').innerText = data.groupName;
+            document.getElementById('col-common').innerHTML = renderGroup(data.common, true);
+            document.getElementById('col-general').innerHTML = renderGroup(data.general);
+            document.getElementById('col-career').innerHTML = renderGroup(data.career);
+            document.getElementById('col-convergence').innerHTML = renderGroup(data.convergence);
         }
 
         const subjectData = {
             '국어': { groupName: '국어', common: [['공통국어1', '공통국어2']], general: [['화법과 언어', '독서와 작문', '문학']], career: [['주제 탐구 독서', '문학과 영상']], convergence: [['매체 의사소통', '독서토론과 글쓰기', '언어생활탐구']] },
             '수학': { groupName: '수학', common: [['공통수학1', '공통수학2']], general: [['대수', '미적분Ⅰ', '확률과 통계']], career: [['기하', '미적분Ⅱ', '경제수학', '인공지능 수학']], convergence: [['수학과 문화', '실용 통계', '이산 수학']] },
             '영어': { groupName: '영어', common: [['공통영어1', '공통영어2']], general: [['영어Ⅰ', '영어Ⅱ', '영어 독해와 작문']], career: [['영미 문학 읽기', '심화 영어', '미디어영어']], convergence: [['실생활 영어회화', '세계 문화와 영어']] },
-            '사회': { groupName: '사회(역사/도덕 포함)', common: [['통합사회1', '통합사회2'], ['한국사1', '한국사2']], general: [['현대사회와 윤리', '세계사', '세계시민과 지리', '정치', '경제', '윤리와사상', '법과 사회', '사회와 문화']], career: [['동아시아 역사 기행', '도시의 미래 탐구', '인문학과 윤리', '한국지리 탐구', '한국사심화탐구', '국제관계의 이해', '윤리문제 탐구', '역사로 탐구하는 현대 세계', '여행지리', '사회문제탐구']], convergence: [['금융과 경제생활', '기후변화와 지속가능한 세계']] },
+            '사회': { groupName: '사회', common: [['통합사회1', '통합사회2'], ['한국사1', '한국사2']], general: [['현대사회와 윤리', '세계사', '세계시민과 지리', '정치', '경제', '윤리와사상', '법과 사회', '사회와 문화']], career: [['동아시아 역사 기행', '도시의 미래 탐구', '인문학과 윤리', '한국지리 탐구', '한국사심화탐구', '국제관계의 이해', '윤리문제 탐구', '역사로 탐구하는 현대 세계', '여행지리', '사회문제탐구']], convergence: [['금융과 경제생활', '기후변화와 지속가능한 세계']] },
             '과학': { groupName: '과학', common: [['통합과학1', '통합과학2'], ['과학탐구실험1', '과학탐구실험2']], general: [['물리학', '화학', '생명과학', '지구과학']], career: [['역학과 에너지', '물질과 에너지', '세포와 물질대사', '행성 우주과학', '전자기와 양자', '화학반응의 세계', '생물의 유전', '지구시스템과학', '과학과제 연구']], convergence: [['기후변화와 환경생태', '과학의 역사와 문화', '융합과학 탐구']] },
             '체육': { groupName: '체육', common: [], general: [['운동과 건강', '스포츠문화']], career: [], convergence: [['스포츠 생활1', '스포츠 생활2']] },
             '예술': { groupName: '예술', common: [], general: [['음악 연주와 창작', '미술 창작']], career: [['음악감상과 비평', '미술감상과 비평']], convergence: [] },
@@ -374,98 +389,23 @@
             '교양': { groupName: '교양', common: [], general: [], career: [], convergence: [] }
         };
 
-        const rawYoutubeCSV = `학년,Title,Video url
-3-1학년 선택2,(정보-진로선택)인공지능 기초,https://www.youtube.com/watch?v=ehooAIfH69g
+        const rawYoutubeCSV = `3-1학년 선택2,(정보-진로선택)인공지능 기초,https://www.youtube.com/watch?v=ehooAIfH69g
 3-1학년 선택3,(예술-진로선택)음악연주와 창작,https://www.youtube.com/watch?v=V1-64ky4OoI
 3-2학년 선택3,(예술-진로선택)음악감상과 비평,https://www.youtube.com/watch?v=0jh4tHjc0Hg
-3-1학년 선택3,(예술-진로선택)미술창작,https://www.youtube.com/watch?v=-TQSYy3-eNI
-3-2학년 선택3,(예술-진로선택)미술 감상과 비평,https://www.youtube.com/watch?v=6gz5hjfU8WU
-3-1학년 선택2,(제2외국어-융합선택)일본문화,https://www.youtube.com/watch?v=0cpiP2-zQSk
-3-1학년 선택2,(제2외국어-융합선택)언어생활과 한자,https://www.youtube.com/watch?v=5iEgYq_SCx0
-3-2학년 선택2,(제2외국어-진로선택)심화일본어,https://www.youtube.com/watch?v=gAfarfixYXE
-3-2학년 선택2,(제2외국어-진로선택)한문고전읽기,https://www.youtube.com/watch?v=ueA9or3gNfk
-2-2학년 선택2,(제2외국어-진로선택)-중국어회화,https://www.youtube.com/watch?v=M65Z7eTDeyY
-2-2학년 선택2,(제2외국어-진로선택)일본어회화,https://www.youtube.com/watch?v=z219CCYuPi4
-2-1학년 선택2,(제2외국어-일반선택)중국어,https://www.youtube.com/watch?v=0CPe3gT5Eok
-2-1학년 선택2,(제2외국어-일반선택)일본어,https://www.youtube.com/watch?v=XOZT2Xmshk8
-3-2학년 선택2,(정보-융합선택)소프트웨어와생활,https://www.youtube.com/watch?v=5YMWV25XE_A
-3-2학년 필수,(체육-융합선택)스포츠 생활2,https://www.youtube.com/watch?v=0PlU33dz6Ws
-3-1학년 필수,(체육-융합선택)스포츠 생활1,https://www.youtube.com/watch?v=9FeKyphs3EI
-2-2학년 필수,(체육-진로선택)스포츠 문화,https://www.youtube.com/watch?v=i9K1Sy5kloo
-2-1학년 필수,(체육-진로선택)운동과 건강,https://www.youtube.com/watch?v=lGJ7futr0R0
-3-2학년 선택1,(과학-융합선택)과학의 역사와 문화,https://www.youtube.com/watch?v=Tfrcyc6dv-c
-3-1학년 선택1,(과학-융합선택)기후변화와 환경생태,https://www.youtube.com/watch?v=HDegDycz6xM
-3-2학년 선택1,(과학-융합선택)융합과학탐구,https://www.youtube.com/watch?v=XRVPgSFOuXc
-3-2학년 선택1,(과학-진로선택)과학과제 연구,https://www.youtube.com/watch?v=dRl1DFSTzok
-2-2학년 선택1,(과학-진로선택)물질과 에너지,https://www.youtube.com/watch?v=K8pbCur_le0
-3-1학년 선택1,(과학-진로선택)생물의 유전,https://www.youtube.com/watch?v=PPeLwhZSQ0k
-2-2학년 선택1,(과학-진로선택)세포와 물질대사,https://www.youtube.com/watch?v=60ZNah735uI
-2-2학년 선택1,(과학-진로선택)역학과에너지,https://www.youtube.com/watch?v=P1gsKXHt0Qk
-3-1학년 선택1,(과학-진로선택)전자기와양자,https://www.youtube.com/watch?v=metLGbJoyYY
-3-1학년 선택1,(과학-진로선택)지구시스템과학,https://www.youtube.com/watch?v=REq4IcQJpZY
-2-2학년 선택1,(과학-진로선택)행성우주과학,https://www.youtube.com/watch?v=yUx5HNWxSPs
-3-1학년 선택1,(과학-진로선택)화학반응의 세계,https://www.youtube.com/watch?v=WeA06Ffmu5U
-2-1학년 선택1,(과학-일반선택)지구과학,https://www.youtube.com/watch?v=OJduZuwnmwc
-2-1학년 선택1,(과학-일반선택)생명과학,https://www.youtube.com/watch?v=3TfxrTHO2nI
-2-1학년 선택1,(과학-일반선택)물리학,https://www.youtube.com/watch?v=inDup_lRBes
-2-1학년 선택1,(과학-일반선택)화학,https://www.youtube.com/watch?v=kE_t-3SlBUQ
-3-1학년 선택1,(사회-융합선택)금융과 경제생활,https://www.youtube.com/watch?v=GxjyRRXwgEM
-3-1학년 선택1,(사회-융합선택)기후변화와 지속가능한 세계,https://www.youtube.com/watch?v=j8RNTH4_BcM
-3-2학년 선택1,(사회-융합선택)사회문제 탐구,https://www.youtube.com/watch?v=LAkca6ix5Ck
-3-2학년 선택1,(사회-융합선택)여행지리,https://www.youtube.com/watch?v=pM9asAyjJSM
-3-2학년 선택1,(사회-융합선택)역사로 탐구하는 현대 세계,https://www.youtube.com/watch?v=KcM2IDNmMR8
-3-2학년 선택1,(사회-융합선택)윤리문제 탐구,https://www.youtube.com/watch?v=tln1XgsFwxU
-2-1학년 선택1,(사회-진로선택)경제,https://www.youtube.com/watch?v=DfL9JlpxisY
-3-1학년 선택1,(사회-진로선택)국제 관계의 이해,https://www.youtube.com/watch?v=_m5eZXUTeCw
-2-2학년 선택1,(사회-진로선택)도시의 미래 탐구,https://www.youtube.com/watch?v=ykLmJBuUnb4
-2-2학년 선택1,(사회-진로선택)동아시아 역사 기행,https://www.youtube.com/watch?v=OgIn8jrrak0
-2-2학년 선택1,(사회-진로선택)법과 사회,https://www.youtube.com/watch?v=D5fvo3khGcI
-2-2학년 선택1,(사회-진로선택)윤리와 사상,https://www.youtube.com/watch?v=ZBdTW9hZOdc
-3-1학년 선택1,(사회-진로선택)인문학과 윤리,https://www.youtube.com/watch?v=jUvaRQ45cXk
-2-1학년 선택1,(사회-진로선택)정치,https://www.youtube.com/watch?v=F3gkE64YF6w
-3-1학년 선택1,(사회-진로선택)한국지리 탐구,https://www.youtube.com/watch?v=cgj5-o38mCg
-2-1학년 선택1,(사회-일반선택)현대사회와 윤리,https://www.youtube.com/watch?v=B_6Jq4u_DHY
-2-1학년 선택1,(사회-일반선택)세계사,https://www.youtube.com/watch?v=Wbh9eI_02_w
-2-1학년 선택1,(사회-일반선택)세계시민과 지리,https://www.youtube.com/watch?v=8p1Iy8TgjXI
-2-2학년 선택1,(사회-일반선택)사회와 문화,https://www.youtube.com/watch?v=67oFbY8Rkys
-2-1학년 선택1,(영어-융합선택)실생활 영어 회화,https://www.youtube.com/watch?v=0sj9Mzppd1I
-3-1학년 선택1,(영어-융합선택)세계 문화와 영어,https://www.youtube.com/watch?v=ENw3_J_XrIk
-3-2학년 필수,(영어-융합선택)미디어 영어,https://www.youtube.com/watch?v=2cqxzbNIDHs
-2-2학년 선택1,(영어-진로선택)영미문학읽기,https://www.youtube.com/watch?v=nFXtrdvmVlw
-3-2학년 선택1,(영어-진로선택)심화영어,https://www.youtube.com/watch?v=0rXqEFbQwTk
-3-1학년 필수,(영어-일반선택)영어독해와 작문,https://www.youtube.com/watch?v=6HZKK0j1tp4
-2-2학년 필수,(영어-일반선택)영어2,https://www.youtube.com/watch?v=eC9b2N2UO6Q
-2-1학년 필수,(영어-일반선택)영어1,https://www.youtube.com/watch?v=k3rMf1d-Qcg
-3-2학년 필수,(수학-융합선택)수학과 문화,https://www.youtube.com/watch?v=_dS32uMM69E
-3-2학년 선택1,(수학-융합선택)실용 통계,https://www.youtube.com/watch?v=ntsE8jsBudM
-3-2학년 선택1,(수학-진로선택전문)이산 수학,https://www.youtube.com/watch?v=WYGfYC8yZpY
-2-1학년 선택1,(수학-진로선택)인공지능 수학,https://www.youtube.com/watch?v=uhIfxd0SweQ
-3-1학년 선택1,(수학-진로선택)미적분2,https://www.youtube.com/watch?v=RvVz-HtHgLs
-2-2학년 선택1,(수학-진로선택)기하,https://www.youtube.com/watch?v=qnNEHIyn1OU
-3-1학년 선택1,(수학-진로선택)경제 수학,https://www.youtube.com/watch?v=5kCKGit1Kl0
-3-1학년 필수,(수학-일반선택)확률과 통계,https://www.youtube.com/watch?v=EyXG3cc3QKg
-2-2학년 필수,(수학-일반선택)미적분1,https://www.youtube.com/watch?v=Q2prILdICnk
-2-1학년 필수,(수학-일반선택)대수,https://www.youtube.com/watch?v=H8LhvjRiJQs
-3-2학년 선택1,(국어-융합선택)매체의사소통,https://www.youtube.com/watch?v=nuawyF-W1qo
-2-1학년 선택1,(국어-융합선택)독서토론과글쓰기,https://www.youtube.com/watch?v=EWeFbPn1Joo
-3-2학년 필수,(국어-진로선택)문학과영상,https://www.youtube.com/watch?v=_i661jyHjbY
-3-1학년 필수,(국어-일반선택)화법과언어,https://www.youtube.com/watch?v=83aWl7nNHGg
-2-1학년 필수,(국어-일반선택) 문학,https://www.youtube.com/watch?v=l7-uRLQV44Y
-2-2학년 필수,(국어-일반선택)독서와 작문,https://www.youtube.com/watch?v=tyjwh2AFlrI`;
+2-1학년 필수,(국어-일반선택) 문학,https://www.youtube.com/watch?v=l7-uRLQV44Y`;
 
         function parseAndRenderYoutube() {
             const lines = rawYoutubeCSV.trim().split('\n');
             const targetCols = { '2req': '#yt-2-req ul', '2elec': '#yt-2-elec ul', '3req': '#yt-3-req ul', '3elec': '#yt-3-elec ul' };
             lines.forEach(line => {
-                if (!line || line.includes('Video url')) return;
                 const parts = line.split(',');
                 if (parts.length < 3) return;
-                const gradeInfo = parts[0], title = parts[1].replace(/"/g, '').replace(/\(.+?\)/, '').trim(), url = parts.slice(2).join(',').trim();
+                const info = parts[0], title = parts[1].replace(/\(.+?\)/, '').trim(), url = parts[2].trim();
                 let target = null;
-                if (gradeInfo.includes('2-') && gradeInfo.includes('필수')) target = targetCols['2req'];
-                else if (gradeInfo.includes('2-') && gradeInfo.includes('선택')) target = targetCols['2elec'];
-                else if (gradeInfo.includes('3-') && gradeInfo.includes('필수')) target = targetCols['3req'];
-                else if (gradeInfo.includes('3-') && gradeInfo.includes('선택')) target = targetCols['3elec'];
+                if (info.includes('2-') && info.includes('필수')) target = targetCols['2req'];
+                else if (info.includes('2-') && info.includes('선택')) target = targetCols['2elec'];
+                else if (info.includes('3-') && info.includes('필수')) target = targetCols['3req'];
+                else if (info.includes('3-') && info.includes('선택')) target = targetCols['3elec'];
                 if (target) document.querySelector(target).innerHTML += `<li class="video-item"><a href="${url}" target="_blank">${title}</a></li>`;
             });
         }
@@ -473,27 +413,17 @@
         function initCheckboxLimits() {
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                 cb.addEventListener('change', function() {
-                    const kmeWarning = document.getElementById('kme-warning');
-                    if (this.dataset.kme === "true") {
-                        if (document.querySelectorAll('input[data-kme="true"]:checked').length > 6) {
-                            this.checked = false; kmeWarning.style.display = 'block'; 
-                        } else { kmeWarning.style.display = 'none'; }
-                    }
-                    const group = this.dataset.group, limit = parseInt(this.dataset.limit);
-                    if(group && limit) {
-                        const boxes = document.querySelectorAll(`input[data-group="${group}"]`);
-                        const checkedCount = document.querySelectorAll(`input[data-group="${group}"]:checked`).length;
-                        boxes.forEach(box => { if(!box.checked) box.disabled = (checkedCount >= limit); });
-                    }
+                    const g = this.dataset.group, l = parseInt(this.dataset.limit);
+                    const count = document.querySelectorAll(`input[data-group="${g}"]:checked`).length;
+                    document.querySelectorAll(`input[data-group="${g}"]`).forEach(b => { if(!b.checked) b.disabled = (count >= l); });
                 });
             });
         }
 
         // ==========================================================
-        // ★ [데이터 삽입 영역] 여기에 대학 엑셀 데이터 파싱 코드를 유지합니다.
+        // ★ [데이터 삽입 영역] 여기에 대학 엑셀 데이터를 통째로 넣으세요!
         // ==========================================================
-        const rawUnivCSVData = `
-2028학년도 권역별 대학별 권장과목,,,,,,,,
+        const rawUnivCSVData = `2028학년도 권역별 대학별 권장과목,,,,,,,,
 ※핵심과목:필수적 이수를 권장하는 과목   ※권장과목:가급적 이수를 권장하는 과목,,,,,,,,
 권역,지역,대학명,"모집단위
 (계열, 단과대, 학과)",,반영과목,,비고,
@@ -2635,47 +2565,36 @@
 *평가활용: 일반 및 진로선택 과목을 위주로 평가에 활용, 모집단위별 관련 교과(군)이나 과목군의 일반선택 과목을 먼저 이수할 것을 권장함. ",
 호남권,전남,"전남대
 (여수)",조기취업형계약학과,디지털융합정보학과,"수학, 물리학",," -물리학: 물리학, 역학과 에너지, 전자기와 양자
-*평가활용: 일반 및 진로선택 과목을 위주로 평가에 활용, 모집단위별 관련 교과(군)이나 과목군의 일반선택 과목을 먼저 이수할 것을 권장함. "
-`;
+*평가활용: 일반 및 진로선택 과목을 위주로 평가에 활용, 모집단위별 관련 교과(군)이나 과목군의 일반선택 과목을 먼저 이수할 것을 권장함. "`;
 
         let parsedExcelData = [];
         function initExcelData() {
             const lines = rawUnivCSVData.trim().split('\n');
-            for(let i = 2; i < lines.length; i++) {
+            for(let i = 0; i < lines.length; i++) {
                 if(lines[i] === "") continue;
-                let p='', row=[''], idx=0, s=!0;
-                for (let l of lines[i]) {
-                    if ('"' === l) { if (s && l === p) row[idx] += l; s = !s; } 
-                    else if (',' === l && s) l = row[++idx] = '';
-                    else row[idx] += l; p = l;
-                }
-                const cols = row;
-                if(cols.length < 7) continue;
-                parsedExcelData.push({
-                    region: cols[0], location: cols[1], univ: cols[2], college: cols[3], dept: cols[4] || '', core: cols[5] || '', rec: cols[6] || '', note: cols[7] || ''
-                });
+                let row=[''], idx=0, s=!0, p='';
+                for(let l of lines[i]) { if('"'===l){s=!s}else if(','===l&&s){l=row[++idx]=''}else{row[idx]+=l} }
+                if(row.length < 7) continue;
+                parsedExcelData.push({ region: row[0], location: row[1], univ: row[2], college: row[3], dept: row[4], core: row[5], rec: row[6], note: row[7]||'-' });
             }
-            populateFilter('filter-region', 'region'); populateFilter('filter-location', 'location'); populateFilter('filter-univ', 'univ');
-            renderExcelTable(parsedExcelData);
+            populateFilter('filter-region', 'region'); populateFilter('filter-location', 'location'); populateFilter('filter-univ', 'univ'); renderExcelTable(parsedExcelData);
         }
-        function populateFilter(selectId, dataKey) {
-            const select = document.getElementById(selectId);
-            [...new Set(parsedExcelData.map(item => item[dataKey]))].filter(v => v !== '').sort().forEach(val => {
-                const option = document.createElement('option'); option.value = option.textContent = val; select.appendChild(option);
-            });
+        function populateFilter(id, key) {
+            const sel = document.getElementById(id);
+            [...new Set(parsedExcelData.map(i => i[key]))].filter(v => v).sort().forEach(v => { const o = document.createElement('option'); o.value = o.innerText = v; sel.appendChild(o); });
         }
         function applyFilters() {
             const r = document.getElementById('filter-region').value, l = document.getElementById('filter-location').value, u = document.getElementById('filter-univ').value, s = document.getElementById('search-dept').value.toLowerCase();
-            const fd = parsedExcelData.filter(i => (r === '' || i.region === r) && (l === '' || i.location === l) && (u === '' || i.univ === u) && (s === '' || i.dept.toLowerCase().includes(s) || i.college.toLowerCase().includes(s)));
+            const fd = parsedExcelData.filter(i => (!r || i.region === r) && (!l || i.location === l) && (!u || i.univ === u) && (!s || i.dept.toLowerCase().includes(s) || i.college.toLowerCase().includes(s)));
             renderExcelTable(fd);
         }
-        function renderExcelTable(dataArray) {
-            const tbody = document.getElementById('excel-table-body');
-            tbody.innerHTML = '';
-            if(dataArray.length === 0) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px;">검색 결과가 없습니다.</td></tr>`; return; }
-            dataArray.forEach(row => {
+        function renderExcelTable(data) {
+            const tbody = document.getElementById('excel-table-body'); tbody.innerHTML = '';
+            data.forEach(r => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${row.region}</td><td>${row.location}</td><td>${row.univ}</td><td>${row.college}</td><td>${row.dept}</td><td>${row.core}</td><td>${row.rec}</td><td>${row.note}</td>`;
+                let cHtml = (!r.core || r.core === '-') ? '-' : `<div class="badge-core">핵심</div><br>${r.core}`;
+                let rHtml = (!r.rec || r.rec === '-') ? '-' : `<div class="badge-rec">권장</div><br>${r.rec}`;
+                tr.innerHTML = `<td>${r.region}</td><td>${r.location}</td><td>${r.univ}</td><td>${r.college}</td><td>${r.dept}</td><td style="text-align:center;">${cHtml}</td><td style="text-align:center;">${rHtml}</td><td style="font-size:0.8rem; color:#666;">${r.note}</td>`;
                 tbody.appendChild(tr);
             });
         }
