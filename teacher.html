@@ -36,7 +36,7 @@
         .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
         .empty-state { text-align: center; color: #888; margin-top: 150px; font-size: 1.2rem; line-height: 1.6; }
         
-        .card { background: white; border-radius: 12px; padding: 40px; width: 100%; max-width: 900px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .card { background: white; border-radius: 12px; padding: 40px; width: 100%; max-width: 1000px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .card-header { border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
         .card-header h2 { color: var(--primary); margin: 0; font-size: 1.8rem; }
         .submit-time { color: #888; font-size: 0.95rem; display: block; margin-top: 5px; }
@@ -50,7 +50,7 @@
         .info-table th, .info-table td { border: 1px solid #ddd; padding: 15px; text-align: left; font-size: 1.05rem; }
         .info-table th { background: #f8f9fa; width: 20%; color: #333; font-weight: bold; text-align: center; }
         
-        .dashboard-table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 30px; }
+        .dashboard-table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 20px; }
         .dashboard-table th, .dashboard-table td { border: 1px solid #ccc; padding: 15px; vertical-align: middle; }
         .dashboard-table thead th { background: #e6f0fa; color: #0056b3; font-weight: bold; text-align: center; font-size: 1.1rem; }
         .dashboard-table tbody th { background: #f8f9fa; color: #333; font-weight: bold; text-align: center; width: 20%; }
@@ -60,13 +60,15 @@
         .subj-tag { display: inline-block; background: #fff; border: 1px solid #0056b3; color: #0056b3; padding: 6px 14px; border-radius: 20px; margin: 4px; font-size: 1rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .subj-none { color: #aaa; font-style: italic; }
 
-        /* 통계 탭 전용 스타일 */
-        .stats-table td { text-align: left !important; padding: 15px 25px !important; }
-        .bar-bg { background: #e9ecef; height: 12px; border-radius: 6px; margin-top: 8px; overflow: hidden; width: 100%; }
-        .bar-fill-1 { background: var(--primary); height: 100%; border-radius: 6px; transition: width 0.5s ease-out; }
-        .bar-fill-2 { background: var(--accent); height: 100%; border-radius: 6px; transition: width 0.5s ease-out; }
-        .stat-count { font-weight: bold; font-size: 1.15rem; color: #333; }
-        .stat-pct { color: #888; font-size: 0.95rem; margin-left: 5px; }
+        /* 통계 탭 전용 좌우 분할 스타일 */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; margin-bottom: 30px; }
+        .stats-table th { font-size: 1rem; padding: 12px; }
+        .stats-table td { text-align: left !important; padding: 12px 15px !important; }
+        .bar-bg { background: #e9ecef; height: 10px; border-radius: 5px; margin-top: 6px; overflow: hidden; width: 100%; }
+        .bar-fill-1 { background: var(--primary); height: 100%; border-radius: 5px; transition: width 0.5s ease-out; }
+        .bar-fill-2 { background: var(--accent); height: 100%; border-radius: 5px; transition: width 0.5s ease-out; }
+        .stat-count { font-weight: bold; font-size: 1.1rem; color: #333; }
+        .stat-pct { color: #888; font-size: 0.9rem; margin-left: 5px; }
         .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 3px solid #333; padding-bottom: 15px; }
     </style>
 </head>
@@ -126,7 +128,7 @@
         </div>
 
         <div class="main-content" id="view-stats" style="display:none;">
-            <div class="card" style="max-width: 1000px;">
+            <div class="card" style="max-width: 1100px;">
                 <div class="stat-header">
                     <h2 style="color: var(--primary); margin: 0; font-size: 1.8rem;">📊 선택과목 수요 통계</h2>
                     <div style="color:#666; font-size: 1.1rem; font-weight:bold;" id="stat-target-info">데이터 분석 중...</div>
@@ -138,7 +140,7 @@
     </div>
 
     <script>
-        // ★ 선생님의 최신 구글 Apps Script 배포 URL ★
+        // ★ 선생님의 구글 Apps Script 배포 URL ★
         const scriptUrl = "https://script.google.com/macros/s/AKfycby9MN_q7N9mz0RFjwq-WpJGtFnfKxIhMYCaykMc_KZG7tL-Hj0kk02Y5ycClmOJ5fz8_g/exec";
         
         let allData = [];
@@ -244,7 +246,7 @@
             });
         }
 
-        // 학생 상세 정보 표출 (기존 탭 1)
+        // 학생 상세 정보 표출
         function showDetail(index, listItem) {
             document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
             listItem.classList.add('active');
@@ -309,7 +311,6 @@
         // 특정 학생 데이터 삭제 로직
         async function deleteCurrentStudent() {
             if(!currentStudentId) return;
-            
             if(!confirm(`정말 ${currentStudentName}(${currentStudentId}) 학생의 제출 기록을 삭제하시겠습니까?\n\n※ 삭제 후에는 복구할 수 없습니다.`)) return;
 
             const btn = document.getElementById('delete-btn');
@@ -331,7 +332,6 @@
                 currentStudentId = "";
                 currentStudentName = "";
                 
-                // 데이터 재조회
                 setTimeout(() => { fetchData(); }, 1000); 
 
             } catch (error) {
@@ -344,7 +344,7 @@
         }
 
         // =========================================================
-        // ★ 실시간 통계 계산 및 그래프 렌더링 함수 (새로 추가됨) ★
+        // ★ 실시간 통계 계산 (1학기/2학기 좌우 분할 버전) ★
         // =========================================================
         function renderStats() {
             const container = document.getElementById('stats-container');
@@ -356,10 +356,9 @@
                 return;
             }
 
-            let countG1 = 0; // 현재 1학년 (2학년 선택을 하는 학생)
-            let countAll = filteredData.length; // 전체 인원
+            let countG1 = 0; 
+            let countAll = filteredData.length; 
 
-            // 과목별 카운트를 저장할 빈 객체 세팅
             const stats = {
                 y2_tech: { s1: {}, s2: {} },
                 y2_elec: { s1: {}, s2: {} },
@@ -368,7 +367,6 @@
                 y3_elec: { s1: {}, s2: {} }
             };
 
-            // 데이터 분석 및 집계
             filteredData.forEach(student => {
                 let sd;
                 try { sd = JSON.parse(student.subjects); } catch(e) { return; }
@@ -377,11 +375,9 @@
                 const isG2 = String(student.id).startsWith('2');
                 if(!isG2) countG1++;
 
-                // 쉼표로 분리하여 각각 카운트 올리는 함수
                 const tally = (group, sem, arr) => {
                     const idx = (sem === 's1') ? 0 : 1;
                     if(!arr || !arr[idx] || arr[idx] === '-' || arr[idx] === '') return;
-                    
                     arr[idx].split(',').forEach(subj => {
                         const s = subj.trim();
                         if(s) { stats[group][sem][s] = (stats[group][sem][s] || 0) + 1; }
@@ -398,58 +394,68 @@
                 tally('y3_elec', 's1', sd.y3_elec); tally('y3_elec', 's2', sd.y3_elec);
             });
 
-            // 우측 상단 안내 문구 업데이트
             const gradeText = document.getElementById('filter-grade').options[document.getElementById('filter-grade').selectedIndex].text;
             const classText = document.getElementById('filter-class').options[document.getElementById('filter-class').selectedIndex].text;
             targetInfo.innerText = `분석 대상: ${gradeText} ${classText} (총 ${countAll}명)`;
 
             let html = '';
 
-            // 통계 표 + 진행바 생성 함수
-            const makeStatTable = (title, statGroup, totalDenominator) => {
-                const s1Keys = Object.keys(statGroup.s1);
-                const s2Keys = Object.keys(statGroup.s2);
-                const allSubjects = Array.from(new Set([...s1Keys, ...s2Keys])).sort();
+            // ★ 좌우 분할 통계 표 렌더링 헬퍼 함수 ★
+            const makeSplitStatTable = (title, statGroup, totalDenominator) => {
+                // 선택 횟수가 많은 순서대로 과목을 정렬
+                const s1Keys = Object.keys(statGroup.s1).sort((a,b) => statGroup.s1[b] - statGroup.s1[a]);
+                const s2Keys = Object.keys(statGroup.s2).sort((a,b) => statGroup.s2[b] - statGroup.s2[a]);
 
-                if(allSubjects.length === 0 || totalDenominator === 0) return '';
+                if(s1Keys.length === 0 && s2Keys.length === 0) return '';
 
-                let tb = `<div class="table-title">${title} <span style="font-size:0.9rem; color:#666; font-weight:normal; margin-left:10px;">(기준 인원: ${totalDenominator}명)</span></div>
-                          <table class="dashboard-table stats-table">
-                            <thead><tr><th style="width:26%;">과목명</th><th style="width:37%;">1학기 선택수 (비율)</th><th style="width:37%;">2학기 선택수 (비율)</th></tr></thead><tbody>`;
-                
-                allSubjects.forEach(subj => {
-                    const c1 = statGroup.s1[subj] || 0;
-                    const p1 = totalDenominator > 0 ? ((c1 / totalDenominator) * 100).toFixed(1) : 0;
-                    
-                    const c2 = statGroup.s2[subj] || 0;
-                    const p2 = totalDenominator > 0 ? ((c2 / totalDenominator) * 100).toFixed(1) : 0;
+                const makeHalfTable = (keys, semData, semTitle, barClass) => {
+                    let tb = `<table class="dashboard-table stats-table" style="margin-bottom:0;">
+                                <thead>
+                                    <tr><th colspan="2" style="background:#e6f0fa; color:#0056b3;">${semTitle}</th></tr>
+                                    <tr><th style="width:40%;">과목명</th><th style="width:60%;">선택수 (비율)</th></tr>
+                                </thead><tbody>`;
+                    if(keys.length === 0) {
+                        tb += `<tr><td colspan="2" style="text-align:center; color:#888; padding:20px !important;">선택된 과목 없음</td></tr>`;
+                    } else {
+                        keys.forEach(subj => {
+                            const count = semData[subj] || 0;
+                            const pct = totalDenominator > 0 ? ((count / totalDenominator) * 100).toFixed(1) : 0;
+                            const bar = `<div class="bar-bg"><div class="${barClass}" style="width:${pct}%;"></div></div>`;
+                            tb += `<tr>
+                                    <td style="font-weight:bold; color:#222; font-size:1.05rem;">${subj}</td>
+                                    <td><span class="stat-count">${count}명</span><span class="stat-pct">(${pct}%)</span>${bar}</td>
+                                   </tr>`;
+                        });
+                    }
+                    tb += `</tbody></table>`;
+                    return tb;
+                };
 
-                    const bar1 = `<div class="bar-bg"><div class="bar-fill-1" style="width:${p1}%;"></div></div>`;
-                    const bar2 = `<div class="bar-bg"><div class="bar-fill-2" style="width:${p2}%;"></div></div>`;
+                const t1 = makeHalfTable(s1Keys, statGroup.s1, '📌 1학기', 'bar-fill-1');
+                const t2 = makeHalfTable(s2Keys, statGroup.s2, '📌 2학기', 'bar-fill-2');
 
-                    tb += `<tr>
-                            <td style="font-weight:bold; color:#222; font-size:1.05rem;">${subj}</td>
-                            <td><span class="stat-count">${c1}명</span><span class="stat-pct">(${p1}%)</span>${bar1}</td>
-                            <td><span class="stat-count">${c2}명</span><span class="stat-pct">(${p2}%)</span>${bar2}</td>
-                           </tr>`;
-                });
-                tb += `</tbody></table>`;
-                return tb;
+                return `
+                    <div class="table-title">${title} <span style="font-size:0.9rem; color:#666; font-weight:normal; margin-left:10px;">(기준 인원: ${totalDenominator}명)</span></div>
+                    <div class="stats-grid">
+                        ${t1}
+                        ${t2}
+                    </div>
+                `;
             };
 
-            // 2학년 통계 출력 (현재 1학년 데이터)
+            // 2학년 통계 출력 
             if(countG1 > 0) {
                 html += `<h3 style="margin-top:0; border-bottom:2px solid #ccc; padding-bottom:10px; color:#0056b3;">[ 2학년 선택과목 분석 ]</h3>`;
-                html += makeStatTable('■ 기/제/한/교 (택1)', stats.y2_tech, countG1);
-                html += makeStatTable('■ 교과간 선택 (택4)', stats.y2_elec, countG1);
+                html += makeSplitStatTable('■ 기/제/한/교 (택1)', stats.y2_tech, countG1);
+                html += makeSplitStatTable('■ 교과간 선택 (택4)', stats.y2_elec, countG1);
             }
 
-            // 3학년 통계 출력 (전체 학년 데이터)
+            // 3학년 통계 출력 
             if(countAll > 0) {
                 html += `<h3 style="margin-top:50px; border-bottom:2px solid #ccc; padding-bottom:10px; color:#0056b3;">[ 3학년 선택과목 분석 ]</h3>`;
-                html += makeStatTable('■ 예술 (택1)', stats.y3_art, countAll);
-                html += makeStatTable('■ 기/제/한/교 (택1)', stats.y3_tech, countAll);
-                html += makeStatTable('■ 교과간 선택 (택4)', stats.y3_elec, countAll);
+                html += makeSplitStatTable('■ 예술 (택1)', stats.y3_art, countAll);
+                html += makeSplitStatTable('■ 기/제/한/교 (택1)', stats.y3_tech, countAll);
+                html += makeSplitStatTable('■ 교과간 선택 (택4)', stats.y3_elec, countAll);
             }
 
             container.innerHTML = html;
