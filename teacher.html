@@ -5,43 +5,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>소래고 교사용 수강설계 현황 대시보드</title>
     <style>
-        :root { --primary: #0056b3; --accent: #7cb342; --bg: #f4f5f7; }
-        body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; margin: 0; padding: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+        :root { 
+            --primary: #0056b3; 
+            --accent: #7cb342; 
+            --bg: #f4f5f7; 
+        }
+        body { 
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: var(--bg); 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
         
         /* 사이드바 */
-        .sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
-        .sidebar-header { padding: 25px 20px; background: var(--primary); color: white; text-align: center; }
+        .sidebar { 
+            width: 320px; 
+            background: white; 
+            border-right: 1px solid #ddd; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05); 
+            z-index: 10; 
+        }
+        .sidebar-header { 
+            padding: 25px 20px; 
+            background: var(--primary); 
+            color: white; 
+            text-align: center; 
+        }
         .sidebar-header h2 { margin: 0; font-size: 1.4rem; }
         
-        .filter-container { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px; }
-        .filter-select { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; }
-
-        .refresh-btn { padding: 12px; background: #e6f0fa; color: var(--primary); border: none; border-bottom: 1px solid #ddd; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; }
+        .filter-container { 
+            padding: 10px 15px; 
+            background: #f8f9fa; 
+            border-bottom: 1px solid #ddd; 
+            display: flex; gap: 10px; 
+        }
+        .filter-select { 
+            flex: 1; padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 0.95rem; 
+        }
+        .refresh-btn { 
+            padding: 12px; background: #e6f0fa; color: var(--primary); 
+            border: none; border-bottom: 1px solid #ddd; cursor: pointer; 
+            font-size: 1rem; font-weight: bold; transition: 0.2s; 
+        }
         .refresh-btn:hover { background: #d0e4f7; }
         
         .student-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex-grow: 1; }
-        .student-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; display: flex; align-items: center; }
+        .student-item { 
+            padding: 15px 20px; border-bottom: 1px solid #eee; 
+            cursor: pointer; display: flex; align-items: center; 
+        }
         .student-item:hover { background: #f0f7ff; }
         .student-item.active { background: #e6f0fa; border-left: 5px solid var(--primary); font-weight: bold; }
-        .stu-id-badge { background: #555; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; color: white; margin-right: 10px; font-weight: bold; }
+        .stu-id-badge { 
+            background: #555; padding: 4px 10px; border-radius: 12px; 
+            font-size: 0.85rem; color: white; margin-right: 10px; font-weight: bold; 
+        }
         
         /* 메인 탭 네비게이션 */
         .content-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
-        .top-nav { background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; display: flex; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 5; flex-wrap: wrap; }
-        .nav-tab { background: #f4f5f7; color: #555; border: 1px solid #ccc; padding: 10px 15px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .top-nav { 
+            background: white; padding: 15px 30px; border-bottom: 1px solid #ddd; 
+            display: flex; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 5; flex-wrap: wrap; 
+        }
+        .nav-tab { 
+            background: #f4f5f7; color: #555; border: 1px solid #ccc; 
+            padding: 10px 15px; border-radius: 8px; font-size: 1.05rem; 
+            font-weight: bold; cursor: pointer; transition: 0.2s; 
+        }
         .nav-tab:hover { background: #e9ecef; }
-        .nav-tab.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 6px rgba(0,86,179,0.3); }
+        .nav-tab.active { 
+            background: var(--primary); color: white; border-color: var(--primary); 
+            box-shadow: 0 2px 6px rgba(0,86,179,0.3); 
+        }
 
         /* 메인 콘텐츠 영역 */
-        .main-content { flex-grow: 1; padding: 30px 40px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+        .main-content { 
+            flex-grow: 1; padding: 30px 40px; overflow-y: auto; 
+            display: flex; flex-direction: column; align-items: center; 
+        }
         .empty-state { text-align: center; color: #888; margin-top: 150px; font-size: 1.2rem; line-height: 1.6; }
         
-        .card { background: white; border-radius: 12px; padding: 35px; width: 100%; max-width: 1100px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .card-header { border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .card { 
+            background: white; border-radius: 12px; padding: 35px; 
+            width: 100%; max-width: 1100px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+        }
+        .card-header { 
+            border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 25px; 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+        }
         .card-header h2 { color: var(--primary); margin: 0; font-size: 1.8rem; }
         .submit-time { color: #888; font-size: 0.95rem; display: block; margin-top: 5px; }
         
-        .delete-btn { background: #d32f2f; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .delete-btn { 
+            background: #d32f2f; color: white; border: none; padding: 10px 15px; 
+            border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; 
+            transition: 0.2s; display: flex; align-items: center; gap: 5px; 
+        }
         .delete-btn:hover { background: #b71c1c; }
 
         .info-table { width: 100%; border-collapse: collapse; margin-bottom: 35px; }
@@ -52,8 +119,15 @@
         .dashboard-table th, .dashboard-table td { border: 1px solid #ccc; padding: 12px; vertical-align: middle; }
         .dashboard-table thead th { background: #e6f0fa; color: #0056b3; font-weight: bold; text-align: center; font-size: 1.05rem; }
         
-        .table-title { font-size: 1.2rem; font-weight: bold; color: #333; margin: 30px 0 10px 0; background: #eee; padding: 10px 15px; border-radius: 6px; border-left: 5px solid var(--primary); }
-        .subj-tag { display: inline-block; background: #fff; border: 1px solid #0056b3; color: #0056b3; padding: 5px 12px; border-radius: 20px; margin: 3px; font-size: 0.95rem; font-weight: bold; }
+        .table-title { 
+            font-size: 1.2rem; font-weight: bold; color: #333; margin: 30px 0 10px 0; 
+            background: #eee; padding: 10px 15px; border-radius: 6px; border-left: 5px solid var(--primary); 
+        }
+        .subj-tag { 
+            display: inline-block; background: #fff; border: 1px solid #0056b3; 
+            color: #0056b3; padding: 5px 12px; border-radius: 20px; 
+            margin: 3px; font-size: 0.95rem; font-weight: bold; 
+        }
 
         /* 통계 탭 전용 독립 분할 스타일 */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; margin-bottom: 20px; }
@@ -64,7 +138,10 @@
         .bar-fill-2 { background: var(--accent); height: 100%; border-radius: 5px; transition: width 0.5s ease-out; }
         .stat-count { font-weight: bold; font-size: 1.15rem; color: #333; }
         .stat-pct { color: #888; font-size: 0.95rem; margin-left: 5px; }
-        .stat-header-main { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 3px solid #333; padding-bottom: 15px; }
+        .stat-header-main { 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+            margin-bottom: 20px; border-bottom: 3px solid #333; padding-bottom: 15px; 
+        }
     </style>
 </head>
 <body>
@@ -95,11 +172,13 @@
         
         <div class="top-nav">
             <button class="nav-tab active" id="tab-btn-student" onclick="switchView('student')">👨‍🎓 학생별 현황</button>
-            <button class="nav-tab" id="tab-btn-stats-1to2" onclick="switchView('stats-1to2')">📊 1학년 ➡ 2학년 선택</button>
-            <button class="nav-tab" id="tab-btn-stats-1to3" onclick="switchView('stats-1to3')">📊 1학년 ➡ 3학년 선택</button>
-            <button class="nav-tab" id="tab-btn-stats-2to3" onclick="switchView('stats-2to3')">📊 2학년 ➡ 3학년 선택</button>
+            <!-- ★ 통계 탭들은 CSS에서 display:none 처리해두고 JS에서 검사하여 보여줍니다 -->
+            <button class="nav-tab" id="tab-btn-stats-1to2" onclick="switchView('stats-1to2')" style="display:none;">📊 1학년 ➡ 2학년 선택</button>
+            <button class="nav-tab" id="tab-btn-stats-1to3" onclick="switchView('stats-1to3')" style="display:none;">📊 1학년 ➡ 3학년 선택</button>
+            <button class="nav-tab" id="tab-btn-stats-2to3" onclick="switchView('stats-2to3')" style="display:none;">📊 2학년 ➡ 3학년 선택</button>
         </div>
 
+        <!-- [뷰 1] 학생별 상세 현황 -->
         <div class="main-content" id="view-student">
             <div class="empty-state" id="empty-state">
                 👈 왼쪽 목록에서 <strong>학생의 학번과 이름</strong>을 클릭하시면<br>해당 학생이 제출한 선택과목 현황이 나타납니다.
@@ -124,6 +203,7 @@
             </div>
         </div>
 
+        <!-- [뷰 2] 1학년의 2학년 선택 통계 -->
         <div class="main-content" id="view-stats-1to2" style="display:none;">
             <div class="card">
                 <div class="stat-header-main">
@@ -137,6 +217,7 @@
             </div>
         </div>
 
+        <!-- [뷰 3] 1학년의 3학년 선택 통계 -->
         <div class="main-content" id="view-stats-1to3" style="display:none;">
             <div class="card">
                 <div class="stat-header-main">
@@ -150,6 +231,7 @@
             </div>
         </div>
 
+        <!-- [뷰 4] 2학년의 3학년 선택 통계 -->
         <div class="main-content" id="view-stats-2to3" style="display:none;">
             <div class="card">
                 <div class="stat-header-main">
@@ -166,6 +248,13 @@
     </div>
 
     <script>
+        // =========================================================
+        // ★ 통계 공개 설정 (비밀 스위치) ★
+        // =========================================================
+        // 나중에 모든 선생님들(또는 학생들)에게 통계를 완전히 공개하시려면
+        // 아래 false를 true 로 바꿔주시면 됩니다!
+        const isStatPublic = false;
+
         // ★ 최신 구글 Apps Script URL ★
         const scriptUrl = "https://script.google.com/macros/s/AKfycby9MN_q7N9mz0RFjwq-WpJGtFnfKxIhMYCaykMc_KZG7tL-Hj0kk02Y5ycClmOJ5fz8_g/exec";
         
@@ -178,6 +267,16 @@
         window.onload = () => {
             initClassSelect();
             fetchData();
+            
+            // 비밀 URL 체크 로직 (주소창 끝에 ?admin=ok 를 붙이면 보임)
+            const urlParams = new URLSearchParams(window.location.search);
+            const isAdmin = urlParams.get('admin') === 'ok';
+            
+            if (isStatPublic || isAdmin) {
+                document.getElementById('tab-btn-stats-1to2').style.display = 'inline-block';
+                document.getElementById('tab-btn-stats-1to3').style.display = 'inline-block';
+                document.getElementById('tab-btn-stats-2to3').style.display = 'inline-block';
+            }
         };
 
         function initClassSelect() {
@@ -345,11 +444,8 @@
         // ★ 실시간 통계 : 학기별 독립 표출 로직 ★
         // =========================================================
 
-        // 독립 테이블 생성 함수
         function makeIndependentSplitTable(statGroup, totalDenominator) {
-            
             const buildSem = (semData, barClass, semTitle) => {
-                // 선택 인원 기준 내림차순 정렬
                 const keys = Object.keys(semData).sort((a, b) => semData[b] - semData[a]);
                 
                 let inner = `
@@ -390,7 +486,6 @@
             </div>`;
         }
 
-        // 배열 문자열을 카운팅 객체에 누적하는 헬퍼 함수
         const tallyHelper = (target, semIdx, arr) => {
             if(!arr || !arr[semIdx] || arr[semIdx] === '-' || arr[semIdx] === '') return;
             arr[semIdx].split(',').forEach(subj => {
